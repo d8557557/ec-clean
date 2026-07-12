@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 電商訂單清理工具
-刪除空白列 + 子項目補父訂單（含格式） + 商品編號智慧校正
+Step 1: 刪除空白列
+Step 2: 子項目補父訂單（含格式）
+Step 3: 商品編號智慧校正
+Step 4: 刪除 AE 欄為「[促銷贈品]免運費」的列
 
 用法:
   python ec_clean.py <來源訂單.xlsx> [輸出檔名.xlsx]
@@ -150,6 +153,24 @@ def main():
                 print(f"  -> Row {row}: 「{af_clean}」→「{ai_clean}」（取自商品型號）")
 
     print(f"  -> 共 {fix_count} 列商品編號校正")
+    print()
+
+    # ═══════════════════════════════════════════
+    # Step 4：刪除 AE 欄為「[促銷贈品]免運費」的列
+    # ═══════════════════════════════════════════
+    # AE(第31欄=商品名稱) 若包含「[促銷贈品]免運費」，則整列刪除
+    # ═══════════════════════════════════════════
+    print("[Step 4] 刪除 AE 欄為「[促銷贈品]免運費」的列...")
+    promo_rows = []
+    for row in range(ws.max_row, 1, -1):
+        ae_val = ws.cell(row=row, column=31).value
+        if ae_val and '[促銷贈品]免運費' in str(ae_val):
+            promo_rows.append(row)
+
+    for r in promo_rows:
+        ws.delete_rows(r)
+
+    print(f"  -> 已刪除 {len(promo_rows)} 列「[促銷贈品]免運費」: {list(reversed(promo_rows)) if promo_rows else '無'}")
     print()
 
     # ═══════════════════════════════════════════
